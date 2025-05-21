@@ -249,7 +249,7 @@ typedef struct dict {
 > 2. 到达L1之后，就会接着查找，找到15则继续，发现25>22，就继续到下一层BL查找
 > 3. 最终在BL层找到节点22
 
-![img](images/0ea37ee2-c224-4c79-b895-e131c6805c40.png)
+![img](../images/0ea37ee2-c224-4c79-b895-e131c6805c40.png)
 
 跳跃链表的优点：
 

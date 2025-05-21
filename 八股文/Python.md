@@ -4,7 +4,7 @@
 
 类的特性什么的，可以看https://www.youtube.com/watch?v=WBrX9n0SWG8
 
-![image-20250410120822866](images/image-20250410120822866.png)
+![image-20250410120822866](../images/image-20250410120822866.png)
 
 **继承**
 
