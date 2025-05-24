@@ -430,3 +430,26 @@ Memcached将内存分割为特定长度的块来存储数据，但是这样会�
 
 Redis按照不同的对象动态分配内存，利用 jemalloc 的 bin、arena 机制减少系统调用和碎片，同时通过 SDS、ziplist/quicklist 等策略兼顾性能和空间利用。
 
+> bin：jemclloc是Redis默认的内存分配器，jemalloc会把不同大小的内存划分到不同的桶里，每次申请的时候就会直接从对应桶中拿出预先分配好的空闲块，这样就不需要每次都向操作系统申请了
+>
+>
+> arena：jemalloc会为每个线程维护自己的内存池，这样线程就不会频繁竞争同一个内存池，减少锁冲突
+>
+> 
+> ziplist：一种紧凑的、连续内存的压缩列表结构，适合存放少量或短字符串的列表／哈希／有序集合，能显著减少指针开销。
+>
+> quicklist：Redis 4.0 引入的列表底层实现，将多个 ziplist 串成双向链表，每个节点是一个 ziplist。
+
+## 键的过期时间
+
+Redis可以为每一个键设置一个过期时间，当时间到的时候Redis会自动地删除这个键
+
+```bash
+EXPIRE key seconds         # 以秒为单位设置过期时间
+PEXPIRE key milliseconds   # 以毫秒为单位设置过期时间
+
+# 也可以使用下面这种方式
+SET key value [EX seconds] [PX milliseconds] [NX|XX]  # NX表示当键不存在的话才执行这次set，XX是键存在才执行set
+例如：SET foo "bar" EX 30 NX
+```
+
