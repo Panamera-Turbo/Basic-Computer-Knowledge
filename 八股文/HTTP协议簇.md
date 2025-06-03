@@ -18,18 +18,18 @@ User-Agent: Mozilla/5.0 xxx
 param1=1&param2=2
 ```
 
-> Accept											告诉服务器我能接受哪些类型的资源
-> Accept-Encoding							支持的数据压缩格式（gzip等）
-> Accept-Language							浏览器偏好的语言
-> Cache-Control								控制是否使用本地缓存
-> Host												请求的是哪个主机
-> If-Modified-Since							本地缓存资源在服务器修改时间（判断上一次连接之后服务器有没有修改过该资源）
-> If-None-Match								本地资源的 ETag，用于条件请求
->
-> （修改时间可能是s为单位的，不能及时更新，但是搭配ETag就可以很好的进行资源更新判断，只要资源修改过一次那么就会更新ETag）
-> Proxy-Connection							给代理用的长连接设置（非标准）
-> Upgrade-Insecure-Requests			表示愿意升级为 HTTPS
-> User-Agent										浏览器和系统的信息
+| 请求头                    | 含义                                                   |
+| ------------------------- | ------------------------------------------------------ |
+| Accept                    | 告诉服务器我能接受哪些类型的资源                       |
+| Accept-Encoding           | 支持的数据压缩格式（gzip、deflate 等）                 |
+| Accept-Language           | 浏览器偏好的语言                                       |
+| Cache-Control             | 控制是否使用本地缓存                                   |
+| Host                      | 请求的是哪个主机                                       |
+| If-Modified-Since         | 本地缓存资源在服务器修改时间（判断上次连接后是否改动） |
+| If-None-Match             | 本地资源的 ETag，用于条件请求                          |
+| Proxy-Connection          | 给代理用的长连接设置（非标准）                         |
+| Upgrade-Insecure-Requests | 表示愿意升级为 HTTPS                                   |
+| User-Agent                | 浏览器和系统的信息                                     |
 
 ```http
 HTTP/1.1 200 OK
@@ -58,22 +58,24 @@ X-Cache: HIT
 </html>
 ```
 
-> HTTP/1.1 200 OK													状态码，表示请求成功，服务器返回了网页内容
-> Age: 529651															当前资源在缓存中存在的时间（秒），如 CDN 缓存了 6 天
-> Cache-Control: max-age=604800							告诉浏览器或代理服务器：这个资源最多缓存 604800 秒（7天）
-> Connection: keep-alive											告诉浏览器保持 TCP 连接，不用每次都重新连接
-> Content-Encoding: gzip											响应内容使用了 gzip 压缩，节省带宽，加快加载速度
-> Content-Length: 648												响应内容的大小（单位：字节，注意是压缩后的长度）
-> Content-Type: text/html; charset=UTF-8				内容类型为 HTML 页面，字符编码为 UTF-8（支持多语言）
-> Date: Mon, 02 Nov 2020 17:53:39 GMT				响应生成时间，服务器返回这份内容的时间戳
-> Etag: "3147526947+ident+gzip"							当前资源的唯一标识符，用于条件缓存，浏览器下次请求可用 If-None-Match 比对是否更新
-> Expires: Mon, 09 Nov 2020 17:53:39 GMT			HTTP/1.0 缓存策略，资源到这个时间前可以使用缓存（与 Cache-Control 搭配使用）
-> Keep-Alive: timeout=4											表示当前连接会保持 4 秒后关闭（适用于 Keep-Alive）
-> Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT	资源最后修改时间，用于 If-Modified-Since 条件缓存判断
-> Proxy-Connection: keep-alive								给代理服务器用的连接保持设置（非标准字段）
-> Server: ECS (sjc/16DF)										服务器使用的软件信息（此处为边缘缓存服务器 ECS，可能是 CDN 节点）
-> Vary: Accept-Encoding										代理服务器/缓存系统应该根据 Accept-Encoding（如 gzip、br）分别缓存不同压缩版本
-> X-Cache: HIT														本次请求命中了缓存（如来自 CDN 或代理缓存），不是从源站重新拉取的
+| 响应头字段                                   | 含义                                                         |
+| -------------------------------------------- | ------------------------------------------------------------ |
+| HTTP/1.1 200 OK                              | 状态码，表示请求成功，服务器返回了网页内容                   |
+| Age: 529651                                  | 资源在缓存中已经存在的时间（秒），例如此处表示该资源在 CDN 缓存中已存活 529651 秒（约 6 天） |
+| Cache-Control: max-age=604800                | 告诉浏览器或代理该资源最多可以缓存 604800 秒（7 天），在此期间可直接使用缓存而不重新向服务器请求 |
+| Connection: keep-alive                       | 指示客户端与服务器保持 TCP 连接（持久连接），无需每次请求都重新建立 TCP 握手 |
+| Content-Encoding: gzip                       | 响应内容使用 gzip 压缩，以节省带宽、加快传输速度             |
+| Content-Length: 648                          | 响应报文体的长度（以字节为单位，注意这是压缩后的字节数）     |
+| Content-Type: text/html; charset=UTF-8       | 内容类型为 HTML 页面，字符编码为 UTF-8（支持多语言）         |
+| Date: Mon, 02 Nov 2020 17:53:39 GMT          | 响应生成时间戳，表示服务器在该时间点返回了这份内容           |
+| Etag: "3147526947+ident+gzip"                | 当前资源的唯一标识符（ETag），用于条件性请求；下次客户端可在请求头里带上 If-None-Match 比较是否需要更新 |
+| Expires: Mon, 09 Nov 2020 17:53:39 GMT       | HTTP/1.0 时代的缓存控制字段，表示在该时间点之前客户端可以使用缓存资源；通常与 Cache-Control 配合使用 |
+| Keep-Alive: timeout=4                        | 在启用 Connection: keep-alive 时，此字段指定当前连接在空闲 4 秒后关闭 |
+| Last-Modified: Thu, 17 Oct 2019 07:18:26 GMT | 资源在服务器上的最后修改时间，客户端可以结合 If-Modified-Since 字段向服务器发起条件请求 |
+| Proxy-Connection: keep-alive                 | （非标准字段）给代理服务器使用的持久连接设置，通常与 Connection: keep-alive 配合 |
+| Server: ECS (sjc/16DF)                       | 服务器软件信息（此处可能表示某个 CDN 节点或边缘缓存服务器的软件/版本） |
+| Vary: Accept-Encoding                        | 指示代理服务器或 CDN 在缓存时要区分 Accept-Encoding 请求头，不同压缩格式（gzip、br 等）要分别缓存 |
+| X-Cache: HIT                                 | 表示本次请求命中了缓存（如来自 CDN 或代理缓存），而非直接从源站拉取 |
 
 ## HTTP方法
 
