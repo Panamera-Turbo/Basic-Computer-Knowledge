@@ -459,3 +459,18 @@ HTTP/2.0 在客户端请求一个资源时，会把相关的资源一起发送�
 > GET是可以缓存的
 >
 > POST是不可缓存的
+
+# HTTPs
+
+HTTPs协议的流程如下
+
+> 1. *客户端---------->服务器*：发送一个ClientHello的信息，里面包含（1）客户端支持的TLS版本（2）客户端的随机数ClientRandom（3）客户端支持的加密算法
+> 2. *服务器---------->客户端*：服务器发送一个ServerHello的信息，里面包含（1）服务器从客户端支持的加密算法中选取一个支持的加密算法 （2）服务器生成的随机数ServerRandom（3）服务器选取的HTTP版本号
+> 3. *服务器---------->客户端*：服务器继续发送一个Certificate信息，其中包含（1）服务器证书（里面有服务器公钥、签名、有效期等） （2）中间CA和根CA（可选）
+> 4. *服务器---------->客户端*：发送一个ServerHelloDone的信息，告诉客户端服务器这边的 Hello + 证书阶段到此结束，请客户端继续发下一条消息
+> 5. *客户端验证证书的合法性*：（1）客户端在本地检查从服务器证书中拿到的CA签名链，查看根CA或者是中间CA是否在信任的列表里，如果有的话那么就取出**服务器公钥**，否则告知用户证书不可信。（2）检查其他属性：检查证书的有效性，检查证书的域名是否与当前访问的域名一致
+> 6. *客户端---------->服务器*：发送一个ClientKeyExchange，客户端生成一个随机数Pre-Master Secret，并且使用服务器的公钥对Pre-Master Secret进行加密
+> 7. *服务器解密*：服务器收到客户端发来的ClientKeyExchange，会使用自己的私钥解密得到Pre-Master Secret
+> 8. *双方生成Master Secret*：由于客户端此时拥有ClientRandom，ServerRandom，Pre-Master Secret，服务器也同时拥有ClientRandom，ServerRandom，Pre-Master Secret。双方通过PRF（伪随机函数，同一个TLS版本采用的PRF算法是固定的）计算得到相同的Master Secret，并从Master Secret中派生**得到双方通信时的对称密钥**
+> 9. 此后通信双方的数据就是采用这个对称密钥进行加密
+
