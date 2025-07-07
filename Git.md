@@ -19,17 +19,17 @@ ssh-keygen -t ed25519 -C "个人邮箱"
 
 <mark>注意！！！不要将私钥加入到SSH中</mark>
 
-![image-20250707160815903](../images/image-20250707160815903.png)
+![image-20250707160815903](D:/笔记/Basic-Computer-Knowledge/images/image-20250707160815903.png)
 
 4. 添加公钥到仓库的SSH中
 
 点击右上角的头像部分并进入偏好设置
 
-![image-20250707161329417](../images/image-20250707161329417.png)
+![image-20250707161329417](D:/笔记/Basic-Computer-Knowledge/images/image-20250707161329417.png)
 
 然后在偏好设置中的SSH中添加刚刚生成好的PUB文件内容
 
-![image-20250707161713392](../images/image-20250707161713392.png)
+![image-20250707161713392](D:/笔记/Basic-Computer-Knowledge/images/image-20250707161713392.png)
 
 5. 创建工作目录
 
@@ -52,5 +52,5 @@ git clone http://xxxxxxx
 
 每当有一个新的主机需要连接仓库的时候就要生成主机的公钥和私钥，并将公钥添加到仓库的SSH列表中，然后就可以正常的访问仓库。
 
-![image-20250707162327125](../images/image-20250707162327125.png)
+![image-20250707162327125](D:/笔记/Basic-Computer-Knowledge/images/image-20250707162327125.png)
 
