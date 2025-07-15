@@ -1,6 +1,4 @@
-# Redis
-
-## 概述
+# 概述
 
 Redis是速度非常快的NoSQL键值对数据库，Redis数据库是存放在内存中的。
 
@@ -8,7 +6,11 @@ Redis是速度非常快的NoSQL键值对数据库，Redis数据库是存放在�
 
 Redis支持很多特性，将内存的数据持久化到硬盘中，使用复制来扩展读性能，使用分片来扩展写性能
 
-## 数据类型
+Redis是单线程的模型，一个指令在执行期间，其他指令是不能执行的
+
+Redis只是缓存，而不要将Redis看成是数据库
+
+# 数据类型
 
 | 数据类型 |      可以存储的值      |                             操作                             |
 | :------: | :--------------------: | :----------------------------------------------------------: |
@@ -21,6 +23,8 @@ Redis支持很多特性，将内存的数据持久化到硬盘中，使用复制
 
 
 ### String
+
+对于过长的字符串建议先序列化或者是压缩后再存储
 
 ```html
 > set hello world
@@ -100,8 +104,17 @@ srem 删除键
 
 ### HASH
 
-```html
+```bash
 HSET：向哈希中添加或更新字段，哈希不止有key，还有field，还有value。只有HASH才有field字段
+field使用场景是：可以向一个user用户添加多个属性
+例如：
+fields := map[string]interface{}{
+    "name":    "Alice",
+    "age":     30,
+    "country": "China",
+}
+added, err = rdb.HSet(ctx, "user:1000", fields).Result()
+-----------
 HSET key field value
 
 > hset hash-key sub-key1 value1 
@@ -160,7 +173,7 @@ ZRANGEBYSCORE zset-key 0 800 WITHSCORES
 ZREM zset-key member1
 ```
 
-## 数据结构
+# 数据结构
 
 ### 字典
 
@@ -257,35 +270,37 @@ typedef struct dict {
 > 2. 自平衡树（红黑树）的实现逻辑复杂，代码量大，跳跃链表就比较容易实现，只需要维护每一层节点的next指针即可
 > 3. 在多线程并发场景里，对红黑树做插入／删除通常需要对整个树加写锁。但是跳跃链表可以不用。因为跳跃链表采用的是硬件原子 CAS（CAS是只有当内存中的值等于预期值时，才把它修改为新值，否则不做任何改变，并告诉调用者操作是否成功），所以整个操作是不可分的，只有全部做完或者全部不做。
 
-## Redis使用场景
+# Redis使用场景
 
-### 计数器
+## 计数器
 
 可以对 String 进行自增自减运算，从而实现计数器功能。Redis是内存型数据库，适合存储频繁读写的计数量。
 
-### 缓存
+## 缓存
 
 将热点数据放在内存中，设置内存最大使用量以及淘汰策略来保持缓存的命中率。缓存的内容可能会失效
 
-### 查找表
+## 查找表
 
 像DNS的记录就可以用Redis来存储，查找表的内容不能失效，但是缓存的内容会失效
 
-### 消息队列
+## 消息队列
 
-Listl的数据类型其实是一个双向链表，可以通过 lpush 和 rpop 写入和读取消息。最好还是使用 Kafka、RabbitMQ 等消息中间件。
+List的数据类型其实是一个双向链表，可以通过 lpush 和 rpop 写入和读取消息。最好还是使用 Kafka、RabbitMQ 等消息中间件。
 
-### 会话缓存
+## 会话缓存
 
 服务器不会存储某个对话对应的cookie了而是将所有的cookie存储到Redis数据库当中。因为如果存储的话，那么该请求将会永远到达这个服务器了（粘性）。浏览器会保存Cookie，浏览器发送用户的请求之后就会带上这个Cookie，然后中间件会将这个请求发送到后端的服务器而不是固定的服务器。然后后端的服务器再去Redis数据库中找到用户所对应的Cookie，并恢复出用户上下文。
 
-### 分布式锁实现
+## 分布式锁实现
 
 是一种跨多台机器、在分布式环境中保证互斥访问共享资源的协调机制
 
 实现分布式锁的方法：
 
-1. **SETNX (SET if Not eXists)**
+### SETNX
+
+SETNX (SET if Not eXists)
 
 SETNX是如果不存在就写入并返回成功
 
@@ -296,7 +311,7 @@ SETNX是如果不存在就写入并返回成功
 
 
 # 客户端 A
-if SET mylock "A" NX PX 5000 then # NX 表示的是只有当 lock:test 不存在时才设置成功——保证互斥，PX 给锁设置超时时间，防止持锁者崩溃后锁永不释放。
+if SET mylock "A" NX PX 5000 then # NX 表示的是只有当mylock不存在时才设置成功——保证互斥，PX 给锁设置超时时间，防止持锁者崩溃后锁永不释放。
   └── 成功，A 获得锁，开始访问共享资源
 else
   └── 失败，A 等待后重试或直接返回获取失败
@@ -331,7 +346,7 @@ if SET mylock "B" NX PX 5000 then
 > 4. 无阻塞延迟：SETNX 失败后客户端只能轮询（自旋）或定时重试
 > 5. 功能单一：只是一把非可重入的互斥锁，不支持读写锁、可重入锁、锁续期、排队公平性等高级特性，难以应对复杂分布式场景。
 
-2. **RedLock**
+### RedLock
 
 在 N 个相互独立的 Redis 实例（建议 N≥5）上并行尝试获取同一把锁，并以 多数派（>N/2）获得锁作为加锁成功的判据。
 
@@ -361,13 +376,27 @@ end
 
 **特点**：多数派可用保证高容错，TTL 防死锁，无需客户端时钟同步。
 
-### 其它
+## 其它
 
 Set 可以实现交集、并集等操作，从而实现共同好友等功能。
 
 ZSet 可以实现有序性操作，从而实现排行榜等功能。
 
-## Redis和Memcached
+## 限流
+
+
+
+## 朋友圈点赞
+
+## 抽奖
+
+
+
+
+
+
+
+# Redis和Memcached
 
 Redis和Memcached都是非关系型数据库
 
@@ -440,7 +469,7 @@ Redis按照不同的对象动态分配内存，利用 jemalloc 的 bin、arena �
 >
 > quicklist：Redis 4.0 引入的列表底层实现，将多个 ziplist 串成双向链表，每个节点是一个 ziplist。
 
-## 键的过期时间
+# 键的过期时间
 
 Redis可以为每一个键设置一个过期时间，当时间到的时候Redis会自动地删除这个键
 
@@ -450,6 +479,166 @@ PEXPIRE key milliseconds   # 以毫秒为单位设置过期时间
 
 # 也可以使用下面这种方式
 SET key value [EX seconds] [PX milliseconds] [NX|XX]  # NX表示当键不存在的话才执行这次set，XX是键存在才执行set
-例如：SET foo "bar" EX 30 NX
+例如： SET foo "bar" EX 30 NX
+如果foo不存在的时候，就将它的值设置成为bar，设置30秒的过期时间，但是如果foo存在，则返回nil
+例如： SET foo "bar" EX 30 XX
+如果foo存在的话，将其值设置成为bar，设置30s的过期时间，但是如果foo不存在，则返回nil
 ```
+
+# 使用Go操作Redis
+
+对于过期的键，Redis的处理方式是这样的
+
+> 1. 惰性删除： 当对某个Key执行读/写或者是其他操作的时候，Redis会去检查TTL，如果已经过期的话，那么Redis会将其删除，然后返回nil来处理命令
+> 2. 定期删除： Redis会定期抽样检查部分带有过期时间的键（有过期的时间的键Redis会将其存入到字典当中，并定时在字典里面随机抽样进行检查，如果发现过期则会将其删除），然后将这些键全部删除。
+>
+> 所以只有在访问键的时候，那些过期的键才会被马上删除
+>
+> 并且在go-redis v8中，所有命令都返回一个 `*redis.XxxCmd` 对象，你需要调用它的 `.Result()`（或者只关心错误的 `.Err()`）来拿到最终结果和错误。
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"github.com/go-redis/redis/v8"
+	"log"
+	"time"
+)
+
+func main() {
+	// 1. 创建一个 context（go-redis v8+ 都需要显式传 context）
+	ctx := context.Background()
+	myKey := "myKey"
+
+	// 2. 初始化客户端
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "120.92.20.105:26356",            // Redis 服务地址
+		Password: "C2025xTkSbRi%xQtFkEX98BQR3yQ==", // Redis 密码（没有可留空）
+		DB:       0,                                // 选择 DB 0
+		// （可选）连接池参数：
+		// PoolSize:     10,                        // 同一个客户端最大可以同时打开的TCP连接数
+		// MinIdleConns: 3,							// 池里最少要保留多少空闲连接。
+		// DialTimeout:  5 * time.Second,			// 建立新 TCP 连接时的超时时间。
+	})
+
+	// 3. 测试连接：发送 PING
+	pong, err := rdb.Ping(ctx).Result()
+	if err != nil {
+		log.Fatalf("连接 Redis 失败: %v", err)
+	}
+	fmt.Println("Redis PING:", pong) // 应该打印 "PONG"
+
+	err = rdb.Set(ctx, "mykey", "hust", 10*time.Second).Err()
+	if err != nil {
+		log.Fatal(err)
+	}
+	val, err := rdb.Get(ctx, "mykey").Result()
+	if err != nil {
+		log.Fatal(err)
+	} else {
+		fmt.Printf("mykey=%s\n", val)
+	}
+	time.Sleep(10 * time.Second)
+	fmt.Println("Waiting for 15 seconds...")
+	val, err = rdb.Get(ctx, "mykey").Result()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%s=%s\n", myKey, val)
+	}
+	err = rdb.HSet(ctx, "user001", "name", "hsx").Err()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("Set success!\n")
+	}
+	err = rdb.HSet(ctx, "user001", "add", "east 10").Err()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("Set success!\n")
+	}
+	val, err = rdb.HGet(ctx, "user001", "name").Result()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%s\n", val)
+	}
+	val, err = rdb.HGet(ctx, "user001", "add").Result()
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Printf("%s\n", val)
+	}
+	// 删除多个字段
+	removed, err := rdb.HDel(ctx, "user001", "name", "add").Result()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("删除了 %d 个字段（field1, field3）\n", removed)
+
+}
+```
+
+# Redia和Lua脚本结合
+
+可以用EVAL执行Lua脚本
+
+可以用SCRIPT LOAD将脚本存在Redis里面，并返回其SHA1校验值，后面就可以用这个校验值来代表这个脚本，运行这个脚本。
+
+```bash
+1. 把脚本加载进服务器，拿到 sha1
+127.0.0.1:6379> SCRIPT LOAD "return redis.call('INCR', KEYS[1])"
+"f3c3e2f6d324c3ae5f2c1e6e1234567890abcdef"
+
+2. 用 EVALSHA 执行脚本
+127.0.0.1:6379> EVALSHA f3c3e2f6d324c3ae5f2c1e6e1234567890abcdef 1 mycounter
+(integer) 1
+127.0.0.1:6379> EVALSHA f3c3e2f6d324c3ae5f2c1e6e1234567890abcdef 1 mycounter
+(integer) 2
+```
+
+# 缓存穿透
+
+## 基本概念
+
+缓存穿透指的是缓存没发挥作用，数据不在缓存里面也不在数据库里面。（因为是恶意的攻击，所以反复的去访问已知不存在的Key）
+
+## 解决办法
+
+1. 最好：防止非法请求打到缓存
+2. 退而求此次：请求打到缓存就好，缓存扛住，保护后端数据库
+3. 做好入参校验：限制非法参数，比如手机号，身份证等等
+4. 布隆过滤（真实比较少，因为布隆过滤真实占用的存储空间比较大）
+
+# 缓存击穿
+
+## 基本概念
+
+缓存击穿指的是数据不在缓存里面，但是<mark>数据是在数据库里面的</mark>。
+
+原因是：热点Key过期或者是还没有加载到缓存中，大量并发请求同时访问热点Key
+
+## 解决办法
+
+1. 热点数据永久缓存，不过期（要根据实际情况来判断）
+2. 互斥锁：同一个时刻只有一个线程查询数据库（对缓存更新操作进行加锁，保证只有一个线程可以进行缓存更新）
+3. 缓存预热：提前加载缓存（什么时候预加载：）
+4. 定时异步刷新
+
+# 缓存雪崩
+
+## 基本概念
+
+缓存中的数据在相近时间内大批量过期（即缓存失效）或缓存系统本身故障，而导致数据库响应时间慢或数据库宕机，最终造成整个系统崩溃
+
+## 解决办法
+
+1. 改善集中到期的时间
+2. 限流熔断，降级
+3. 定时异步刷新
+
+
 
