@@ -1,4 +1,4 @@
-## Git登录
+# Git登录
 
 Git登录就是连接到远程的仓库
 
@@ -46,7 +46,11 @@ git clone ssh://xxxxxxxx
 git clone http://xxxxxxx
 ```
 
-使用SSH复制的时候会出现Are you sure you want to continue connecting (yes/no/[fingerprint])?
+使用SSH复制的时候会出现
+
+```bash
+Are you sure you want to continue connecting (yes/no/[fingerprint])?
+```
 
 此时需要输入yes，输入yes后会在上面公钥私钥所在的文件夹中生成一个know_hosts的文件，后面就不会再出现Are you sure you want to continue connecting (yes/no/[fingerprint])?了。
 
