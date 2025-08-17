@@ -233,5 +233,11 @@ git push -u origin hsx  // 第一次把一个新建的本地分支推到远端�
 
 ```bash
 git switch master
-git pull --ff-only   # 只同步但是不会产生提交
+git pull --ff-only   # 只同步但是不会产生提交，如果失败的话就说明master上面有自己的提交，就得用下面的代码进行处理
+
+# 切换到master分支然后再进行处理
+git switch master
+git fetch origin         # 先更新 origin/master 的位置
+git reset --hard origin/master # 将本地的分支彻底重置为 origin/master 指向的提交。
 ```
+
