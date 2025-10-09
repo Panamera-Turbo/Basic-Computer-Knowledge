@@ -1,5 +1,3 @@
-# MySQL
-
 ## VIEW
 
 VIEW视图本身不存储数据，是建立在一个或者多个表的虚拟表，而是保存了一条查询语句。当查询视图时，数据库系统会将视图的定义（保存的查询语句）与用户的查询语句结合起来，生成一个完整的查询语句，然后直接对原始的表进行查询。
@@ -26,7 +24,6 @@ WHERE employee.department = 'Sales';
 
 ```sql
 --创建一个新的视图
-
 CREATE VIEW vip_user_order_stats AS
 SELECT
     u.username,
@@ -57,8 +54,6 @@ SELECT * FROM vip_user_order_stats;
    简单视图（基于单表、直接列投影、无聚合、无 `DISTINCT`、无子查询、无计算列）通常可以 `INSERT`/`UPDATE`/`DELETE`
 
    复杂视图（多表关联、聚合、分组等）一般只读，不能直接修改
-
-
 
 ## 索引
 
@@ -223,7 +218,7 @@ SELECT age FROM users WHERE name = 'Tom';
 
 1. 索引通常远小于数据行的大小，只读取索引可以大大减少数据访问量
 2. 一些存储引擎(例如MyISAM)在内存中只缓存索引（只有少部分数据在内存中），而数据是依赖于操作系统来缓存（其他大部分数据是在磁盘中的，需要的时候由操作系统调用进入内存）的，所以可以只访问索引而不进行系统调用
-3. 对于 InnoDB 引擎，若辅助索引能够覆盖查询，则无需访问主索引。
+3. 对于 InnoDB 引擎，若辅助索引能 够覆盖查询，则无需访问主索引。
 
 **索引的优点**
 
@@ -309,7 +304,7 @@ JOIN的几个类型
 ✅ 数据库层连接（传统做法）：
 
 ```
-sql复制编辑SELECT u.name, o.amount
+SELECT u.name, o.amount
 FROM users u
 JOIN orders o ON u.id = o.user_id
 WHERE u.id = 1;
